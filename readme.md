@@ -1,3 +1,5 @@
+# Introduction
+The repository implements the **grasping** task of _DexRepNet++_ in the Isaac simulator.
 # Dependencies
 - Create a conda environment 
     ```shell
@@ -27,7 +29,7 @@ The above commands show how to install the major packages. You can install other
 # Run the scripts
 ```
 cd dexgrasp
-python train.py --task=ShadowHandGraspDexRep --algo=ppo1 --seed=0 --rl_device=cuda:0 --sim_device=cuda:0 --logdir=logs/dexrep_20
+python train.py --task=ShadowHandGraspDexRep --algo=ppo1 --seed=0 --rl_device=cuda:0 --sim_device=cuda:0 --logdir=logs/dexrep
 ```
 Notes:
 - If you do not want to open the simulator windows, add **--headless** 
