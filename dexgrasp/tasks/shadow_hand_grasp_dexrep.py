@@ -26,16 +26,6 @@ from dexrep.ShareDexRepSensor import SharedDexRepSensor as DexRepEncoder
 _DexRepEncoder_Map = {
             'DexRep': DexRepEncoder,
             'DexRep_debug': DexRepEncoder,
-            # 'DexRep2g': DexRep2gEncoder,
-            # 'DexRepV2g': DexRepV2gEncoder,
-            # 'DexRepHand2g': DexRepHand2gEncoder,
-            # 'DexRepDouble': DexRepDoubleEncoder,
-            # 'DexRepVV2g': DexRepVV2gEncoder,
-            # 'Surf2g': Surf2gEncoder,
-            # 'SurfV2g': SurfV2gEncoder,
-            # 'SurfVV2g': SurfVV2gEncoder,
-            # "Surf": SurfEncoder,
-            # "SurfH2g": SurfH2gEncoder
         }
 
 class ShadowHandGraspDexRep(BaseTask):
@@ -666,27 +656,7 @@ class ShadowHandGraspDexRep(BaseTask):
         base_state = torch.clamp(base_state, -self.cfg["env"]["clip_observations"],
                                  self.cfg["env"]["clip_observations"])
 
-        if self.obs_type == 'VisTac':
-            # pixel observatio
-            pixel_obs = self.compute_pixel_obs()
-            # force sensor
-            touch_force_obs = self.compute_sensor_obs()
-            self.obs_buf = torch.cat((base_state, pixel_obs, touch_force_obs), dim=1)
-
-        elif self.obs_type == 'TacOnly':
-            # force sensor
-            touch_force_obs = self.compute_sensor_obs()
-            self.obs_buf = torch.cat((base_state, touch_force_obs), dim=1)
-
-        elif self.obs_type == 'VisOnly':
-            # pixel observation
-            pixel_obs = self.compute_pixel_obs()
-            self.obs_buf = torch.cat((base_state, pixel_obs), dim=1)
-
-        elif self.obs_type == 'Base':
-            self.obs_buf = base_state
-
-        elif self.obs_type in ['DexRep', "Surf"]:
+        if self.obs_type in ['DexRep']:
             assert self.use_dexrep
             dexrep_obs = self.DexRepEncoder.pre_observation(
                 obj_pos=self.object_pos,
@@ -702,78 +672,8 @@ class ShadowHandGraspDexRep(BaseTask):
                 (base_state, dexrep_obs),
                 dim=1
             )
-        elif self.obs_type in ["DexRep2g", "DexRepV2g", "DexRepVV2g", "DexRepHand2g", "DexRepDouble", "Surf2g", "SurfV2g", "SurfVV2g", "SurfH2g"]:
-            assert self.use_dexrep
-            dexrep_obs = self.DexRepEncoder.pre_observation(
-                obj_pos=self.object_pos,
-                obj_rot=self.object_rot,
-                goal_pos=self.goal_pos,
-                goal_rot=self.goal_rot,
-                hand_pos=self.dexrep_hand_state[:, 11, 0:3].squeeze(dim=1),
-                hand_rot=self.dexrep_hand_state[:, 11, 3:7].squeeze(dim=1),
-                joints_sate=self.dexrep_hand_pos,
-                clip_range=self.cfg["env"]["clip_observations"]
-            )
-            self.obs_buf = torch.cat(
-                (base_state, dexrep_obs),
-                dim=1
-            )
-
-        elif self.obs_type == "pnG":
-            assert self.use_pnG
-            pnG_obs = self.PnGEncoder.pre_observation(
-                obj_pos=self.object_pos,
-                obj_rot=self.object_rot,
-                hand_pos=self.dexrep_hand_state[:, 11, 0:3].squeeze(dim=1),
-                hand_rot=self.dexrep_hand_state[:, 11, 3:7].squeeze(dim=1),
-                joints_sate=self.dexrep_hand_pos,
-                clip_range=self.cfg["env"]["clip_observations"]
-            )
-            self.obs_buf = torch.cat(
-                (base_state, pnG_obs),
-                dim=1
-            )
-        elif self.obs_type == "GeoDex":
-            assert self.use_geodex
-            geodex_obs = self.GeoDexWrapper.pre_observation(
-                # obj_pos=self.object_pos,
-                obj_rot=self.object_rot,
-                # goal_pos=self.goal_pos,
-                goal_rot=self.goal_rot,
-                clip_range=self.cfg["env"]["clip_observations"]
-            )
-            self.obs_buf = torch.cat(
-                (base_state, geodex_obs),
-                dim=1
-            )
-        elif self.obs_type == "DexRep_debug":
-            pc_obs = self.compute_depth_obs()
-            # save first pointcloud
-            obj_pcd_cam = o3d.geometry.PointCloud()
-            obj_pcd_cam.points = o3d.utility.Vector3dVector(pc_obs[0].cpu().numpy())
-            obj_pcd_cam1 = o3d.geometry.PointCloud()
-            obj_pcd_cam1.points = o3d.utility.Vector3dVector(pc_obs[1].cpu().numpy())
-            # save
-            pc_save_path_camera = "/media/szn/PSSD/szn/My/Project/issac_manipulation/output/pc_camera0.ply"
-            pc_save_path_camera1 = "/media/szn/PSSD/szn/My/Project/issac_manipulation/output/pc_camera1.ply"
-            o3d.io.write_point_cloud(pc_save_path_camera, obj_pcd_cam)
-            o3d.io.write_point_cloud(pc_save_path_camera1, obj_pcd_cam1)
-
-            assert self.use_dexrep
-            dexrep_obs = self.DexRepEncoder.pre_observation(
-                obj_pos=self.object_pos,
-                obj_rot=self.object_rot,
-                hand_pos=self.dexrep_hand_state[:, 11, 0:3].squeeze(dim=1),
-                hand_rot=self.dexrep_hand_state[:, 11, 3:7].squeeze(dim=1),
-                joints_sate=self.dexrep_hand_pos,
-                clip_range=self.cfg["env"]["clip_observations"]
-            )
-            # dexrep_obs = torch.clamp(dexrep_obs, -self.cfg["env"]["clip_observations"],
-            #                      self.cfg["env"]["clip_observations"])
-            self.obs_buf = torch.cat(
-                (base_state, dexrep_obs),
-                dim=1
-            )
+        else:
+            raise AttributeError(f'{self.obs_type} not include..')
 
     def get_unpose_quat(self):
         if self.repose_z:
